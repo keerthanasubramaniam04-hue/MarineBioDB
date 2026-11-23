@@ -1,0 +1,6 @@
+compound,n_cell_lines,cell_lines,subtypes
+Araguspongine C,5,"BT-474, MCF-7, MDA-MB-231, SKBR3, T-47D","HER2+, HR+, TNBC"
+Monanchoradin A,3,"MDA-MB-231, MDA-MB-435, MDA-MB-468","TNBC, not classified"
+Fascaplysin,2,"MCF-7, T-47D",HR+
+Manzamine A,2,"MCF-7, MDA-MB-231","HR+, TNBC"
+Renieramycin M,2,"MDA-MB-231, MDA-MB-435","TNBC, not classified"

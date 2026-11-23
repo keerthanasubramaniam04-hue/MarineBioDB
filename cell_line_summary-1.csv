@@ -1,0 +1,8 @@
+cell_line,subtype,n_compounds,min_uM,median_uM,max_uM
+MCF-7,HR+,9,0.44,7.36,24.85
+MDA-MB-231,TNBC,6,0.0038,6.085,10.1
+T-47D,HR+,3,1.9,5.0,46.1
+SUM159PT,TNBC,2,0.07,0.33,0.59
+BT-474,HER2+,1,15.2,15.2,15.2
+SKBR3,HER2+,1,18.3,18.3,18.3
+MDA-MB-435,not classified in source sheet,1,0.0063,0.0063,0.0063
