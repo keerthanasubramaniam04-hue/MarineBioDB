@@ -32,22 +32,83 @@ CHEMICAL_DB = {
 
 @st.cache_data
 def load_from_db():
-    if not os.path.exists(DB_PATH) and os.path.exists("build_database.py"):
-        import build_database
-        build_database.main(DB_PATH)
+  db_valid = os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0
 
-    conn = sqlite3.connect(DB_PATH)
-    ic50_df = pd.read_sql("SELECT * FROM ic50_rankings;", conn)
-    summary_df = pd.read_sql("SELECT * FROM cell_line_summary;", conn)
-    multi_df = pd.read_sql("SELECT * FROM multi_cell_line_compounds;", conn)
-    bands_df = pd.read_sql("SELECT * FROM potency_bands;", conn)
-    ppi_db_df = pd.read_sql("SELECT * FROM ppi_interactions;", conn)
-    conn.close()
+  if not db_valid and os.path.exists("build_database.py"):
+    import build_database
 
-    subtype_map = {"MCF-7": "HR+", "T-47D": "HR+", "BT-474": "HER2+", "SKBR3": "HER2+", "MDA-MB-231": "TNBC", "SUM159PT": "TNBC", "MDA-MB-435": "Unclassified"}
-    ic50_df["subtype"] = ic50_df["cell_line"].map(subtype_map).fillna("Other")
-    ic50_df["pIC50"] = (6 - np.log10(ic50_df["value_uM"])).round(2)
-    return ic50_df, summary_df, multi_df, bands_df, ppi_db_df
+    build_database.main(DB_PATH)
+    db_valid = os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0
+
+  if db_valid:
+    try:
+      conn = sqlite3.connect(DB_PATH)
+      ic50_df = pd.read_sql("SELECT * FROM ic50_rankings;", conn)
+      summary_df = pd.read_sql("SELECT * FROM cell_line_summary;", conn)
+      multi_df = pd.read_sql(
+          "SELECT * FROM multi_cell_line_compounds;", conn
+      )
+      bands_df = pd.read_sql("SELECT * FROM potency_bands;", conn)
+      ppi_db_df = pd.read_sql("SELECT * FROM ppi_interactions;", conn)
+      conn.close()
+    except Exception:
+      db_valid = False
+
+  if not db_valid:
+    if os.path.exists("ic50_ranking_by_cell_line.csv"):
+      ic50_df = pd.read_csv("ic50_ranking_by_cell_line.csv")
+    elif os.path.exists("ic50_ranking_by_cell_line-1.csv"):
+      ic50_df = pd.read_csv("ic50_ranking_by_cell_line-1.csv")
+    else:
+      ic50_df = pd.DataFrame(
+          [
+              ("BT-474", 1, "Araguspongine C", "15.2 ± 2.1", 15.2),
+              ("MCF-7", 1, "Meso-araguspongine C", "0.44 ± 0.05 µM", 0.44),
+              ("MCF-7", 2, "Manzamine A", "2.86 ± 0.19 µM", 2.86),
+              ("MDA-MB-231", 1, "Renieramycin M", "3.8 nM", 0.0038),
+              ("T-47D", 2, "Fascaplysin", "5 ± 0.2 µM (T-47D)", 5.0),
+          ],
+          columns=[
+              "cell_line",
+              "rank_in_cell_line",
+              "compound",
+              "reported_text",
+              "value_uM",
+          ],
+      )
+
+    summary_df = (
+        pd.read_csv("cell_line_summary.csv")
+        if os.path.exists("cell_line_summary.csv")
+        else pd.DataFrame()
+    )
+    multi_df = (
+        pd.read_csv("multi_cell_line_compounds.csv")
+        if os.path.exists("multi_cell_line_compounds.csv")
+        else pd.DataFrame()
+    )
+    bands_df = (
+        pd.read_csv("potency_bands.csv")
+        if os.path.exists("potency_bands.csv")
+        else pd.DataFrame()
+    )
+    ppi_db_df = pd.DataFrame(
+        columns=["protein_a", "protein_b", "string_score", "context"]
+    )
+
+  subtype_map = {
+      "MCF-7": "HR+",
+      "T-47D": "HR+",
+      "BT-474": "HER2+",
+      "SKBR3": "HER2+",
+      "MDA-MB-231": "TNBC",
+      "SUM159PT": "TNBC",
+      "MDA-MB-435": "Unclassified",
+  }
+  ic50_df["subtype"] = ic50_df["cell_line"].map(subtype_map).fillna("Other")
+  ic50_df["pIC50"] = (6 - np.log10(ic50_df["value_uM"])).round(2)
+  return ic50_df, summary_df, multi_df, bands_df, ppi_db_df
+
 
 @st.cache_data
 def fetch_string_ppi(genes, min_score=0.700, db_edges=None):
