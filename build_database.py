@@ -138,4 +138,3 @@ def main(db_path: str = "marine_bioactives.db") -> None:
 
 if __name__ == "__main__":
     main()
-!python build_database.py
